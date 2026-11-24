@@ -7,16 +7,22 @@ import { SimpleHeader } from '@/components/simple-header'
 import { productEnquiryLink, whatsappLink } from '@/lib/constants'
 import { products } from '@/data/products'
 
+const categories = [...new Set(products.map((product) => product.category.trim()).filter(Boolean))]
+  .sort((a, b) => a.localeCompare(b))
+
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
 
   useEffect(() => {
-    setSearchQuery(new URLSearchParams(window.location.search).get('search') ?? '')
+    const searchParams = new URLSearchParams(window.location.search)
+    setSearchQuery(searchParams.get('search') ?? '')
+
+    const requestedCategory = searchParams.get('category')?.toLowerCase()
+    const matchingCategory = categories.find((category) => category.toLowerCase() === requestedCategory)
+    if (matchingCategory) setActiveCategory(matchingCategory)
   }, [])
 
-  const categories = [...new Set(products.map((product) => product.category.trim()).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b))
   const visibleProducts = products.filter((product) => {
     const matchesCategory =
       activeCategory === 'All' || product.category.toLowerCase() === activeCategory.toLowerCase()

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import {
-  ArrowDown,
   ArrowRight,
   ChevronLeft,
   ChevronRight,
@@ -186,6 +185,7 @@ export default function Page() {
   const newLaunchTrack = useRef<HTMLDivElement>(null)
   const productsTrack = useRef<HTMLDivElement>(null)
   const reelsTrack = useRef<HTMLDivElement>(null)
+  const modalOpen = activeOverlay === 'search' || activeReelIndex !== null
 
   useEffect(() => {
     if (!menuOpen) return
@@ -204,6 +204,26 @@ export default function Page() {
       window.removeEventListener('keydown', closeOnEscape)
     }
   }, [menuOpen])
+
+  useEffect(() => {
+    if (activeOverlay !== 'search') return
+
+    function closeSearch(event: KeyboardEvent) {
+      if (event.key === 'Escape') setActiveOverlay(null)
+    }
+    window.addEventListener('keydown', closeSearch)
+    return () => window.removeEventListener('keydown', closeSearch)
+  }, [activeOverlay])
+
+  useEffect(() => {
+    if (!modalOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [modalOpen])
 
   useEffect(() => {
     if (activeReelIndex === null) return
@@ -647,7 +667,7 @@ export default function Page() {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           className="
       absolute inset-0
       h-full w-full
@@ -1031,7 +1051,11 @@ export default function Page() {
           <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 lg:gap-6">
             {categories.map((category, index) => (
               <a
-                href="/products"
+                href={
+                  products.some((product) => product.category.toLowerCase() === category.name.toLowerCase())
+                    ? `/products?category=${encodeURIComponent(category.name)}`
+                    : '/products'
+                }
                 key={category.name}
                 className="group"
                 aria-label={`Explore ${category.name} collection`}
@@ -1051,7 +1075,7 @@ export default function Page() {
                   <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-4 text-white sm:p-6">
                     <div>
                       <span className="mb-2 block text-[8px] uppercase tracking-[0.24em] text-[#e8c987]">
-                        0{index + 1} / 06
+                        0{index + 1} / {String(categories.length).padStart(2, '0')}
                       </span>
                       <h3 className="max-w-[220px] font-serif text-lg leading-tight sm:text-2xl lg:text-[28px]">
                         {category.name}
